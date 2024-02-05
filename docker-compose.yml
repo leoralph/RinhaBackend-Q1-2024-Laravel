@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+    api-01:
+        container_name: rinha-backend-api-01
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "9999:8000"
