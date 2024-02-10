@@ -1,10 +1,56 @@
-version: "3.9"
-
+version: "3"
 services:
-    api-01:
-        container_name: rinha-backend-api-01
+    api01: &api
+        depends_on:
+            db:
+                condition: service_healthy
         build:
             context: .
-            dockerfile: Dockerfile
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: "230MB"
+
+    api02:
+        <<: *api
+
+    nginx:
+        image: nginx:latest
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        depends_on:
+            - api01
+            - api02
         ports:
-            - "9999:8000"
+            - "9999:9999"
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.1"
+                    memory: "30MB"
+
+    db:
+        image: postgres
+        hostname: db
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: 1234
+            POSTGRES_DB: rinhadb
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./postgresql.conf:/docker-entrypoint-initdb.d/postgresql.conf
+        command: postgres -c config_file=/docker-entrypoint-initdb.d/postgresql.conf
+        # network_mode: host
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.4"
+                    memory: "60MB"

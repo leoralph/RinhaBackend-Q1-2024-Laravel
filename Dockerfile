@@ -1,11 +1,13 @@
 FROM dunglas/frankenphp:1.1-builder-php8.3
 
-RUN install-php-extensions pcntl
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+
+RUN install-php-extensions pcntl pdo pdo_pgsql zip
 
 COPY . /app
 
 WORKDIR /app
 
-EXPOSE 8000
+COPY --chown=root:root ./entrypoint.sh /
 
-ENTRYPOINT [ "php", "artisan", "octane:start", "--host=0.0.0.0" ]
+ENTRYPOINT ["/entrypoint.sh"]
